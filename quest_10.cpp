@@ -1,134 +1,215 @@
 #include <iostream>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+
 using namespace std;
 
-int Random_array(int count)
-{
-    int c;
-    c = rand() % (count * count);
-    return c;
-}
-
-class Game
-{
+// Class representing a cell in the Minesweeper board
+class Cell {
 public:
-    int row, col;
-    char arr[20][20];
-    Game(int in_row, int in_col, int bomb_count);
-    void print_arr();
-    void bomb_count();
+    bool isMine;
+    bool isRevealed;
+    bool isFlagged;
+    int adjacentMines;
+
+    Cell() : isMine(false), isRevealed(false), isFlagged(false), adjacentMines(0) {}
 };
 
-Game::Game(int in_row, int in_col, int bomb_count)
-{
-    row = in_row;
-    col = in_col;
-    for (int i = 0; i < in_row; i++)
-    {
-        for (int j = 0; j < in_col; j++)
-        {
-            arr[i][j] = 'C';
-        }
-    }
-    for (int i = 0; i < bomb_count; i++)
-    {
-        int position;
-        int selected_row, selected_col;
-        position = Random_array(in_row);
-        selected_row = position / in_row;
-        selected_col = position % in_row;
-        if (arr[selected_row][selected_col] == 'C')
-        {
-            arr[selected_row][selected_col] = 'M';
-        }
-        else
-        {
-            i--;
-        }
-    }
-}
-void Game::print_arr()
-{
-    for (int i = 0; i < row; i++)
-    {
-        cout << "      ";
-        for (int j = 0; j < col; j++)
-        {
-            cout << arr[i][j] << " ";
-        }
-        cout << endl;
-    }
-}
-void Game::bomb_count()
-{
-    for (int i = 0; i < row; i++)
-    {
+// Class representing the Minesweeper game board
+class MinesweeperGame {
+private:
+    int numRows;
+    int numCols;
+    vector<vector<Cell>> gameBoard;
 
-        for (int j = 0; j < col; j++)
-        {
-            int No_of_bombsAround = 0;
-            for (int m = i - 1; m < i + 2; m++)
-            {
-                for (int n = j - 1; n < j + 2; n++)
-                {
-                    if (arr[m][n] == 'M')
-                    {
+    // Place mines randomly on the board
+    void placeMines(int numMines) {
+        int totalCells = numRows * numCols;
+        while (numMines > 0) {
+            int randRow = rand() % numRows;
+            int randCol = rand() % numCols;
+            if (!gameBoard[randRow][randCol].isMine) {
+                gameBoard[randRow][randCol].isMine = true;
+                numMines--;
+            }
+        }
+    }
 
-                        No_of_bombsAround++;
+    // Calculate the number of adjacent mines for each cell on the board
+    void calculateAdjacentMines() {
+        for (int i = 0; i < numRows; ++i) {
+            for (int j = 0; j < numCols; ++j) {
+                if (!gameBoard[i][j].isMine) {
+                    for (int ni = -1; ni <= 1; ++ni) {
+                        for (int nj = -1; nj <= 1; ++nj) {
+                            int niCoord = i + ni;
+                            int njCoord = j + nj;
+                            if (niCoord >= 0 && niCoord < numRows && njCoord >= 0 && njCoord < numCols &&
+                                gameBoard[niCoord][njCoord].isMine) {
+                                gameBoard[i][j].adjacentMines++;
+                            }
+                        }
                     }
                 }
             }
-            if (arr[i][j] != 'M')
-            {
-                if (No_of_bombsAround == 0)
-                {
-                    arr[i][j] = '.';
+        }
+    }
+
+public:
+    // Constructor to initialize the Minesweeper game
+    MinesweeperGame(int rows, int cols, int mines) : numRows(rows), numCols(cols) {
+        gameBoard.resize(numRows, vector<Cell>(numCols, Cell()));
+        placeMines(mines);
+        calculateAdjacentMines();
+    }
+
+    // Display the current state of the Minesweeper game
+    void displayGame() {
+        cout << "----------------MINE SWEEPER GAME-----------------" << endl;
+        for (int i = 0; i < numRows; ++i) {
+            for (int j = 0; j < numCols; ++j) {
+                if (gameBoard[i][j].isRevealed) {
+                    if (gameBoard[i][j].isMine) {
+                        cout << " * ";
+                    }
+                    else {
+                        cout << " " << gameBoard[i][j].adjacentMines << " ";
+                    }
                 }
-                else
-                {
-                    arr[i][j] = char(No_of_bombsAround + 48);
+                else if (gameBoard[i][j].isFlagged) {
+                    cout << " F ";
+                }
+                else {
+                    cout << " C ";  // C represents a covered (unrevealed) cell
+                }
+            }
+            cout << endl;
+        }
+    }
+
+    // Reveal a cell on the board
+    void revealCell(int row, int col) {
+        if (row >= 0 && row < numRows && col >= 0 && col < numCols && !gameBoard[row][col].isRevealed &&
+            !gameBoard[row][col].isFlagged) {
+            gameBoard[row][col].isRevealed = true;
+            if (gameBoard[row][col].adjacentMines == 0) {
+                for (int ni = -1; ni <= 1; ++ni) {
+                    for (int nj = -1; nj <= 1; ++nj) {
+                        revealCell(row + ni, col + nj);
+                    }
                 }
             }
         }
     }
+
+    // Toggle flag on a cell
+    void toggleFlag(int row, int col) {
+        if (row >= 0 && row < numRows && col >= 0 && col < numCols) {
+            gameBoard[row][col].isFlagged = !gameBoard[row][col].isFlagged;
+        }
+    }
+
+    // Check if the game is won
+    bool isGameWon() {
+        for (int i = 0; i < numRows; ++i) {
+            for (int j = 0; j < numCols; ++j) {
+                if (!gameBoard[i][j].isRevealed && !gameBoard[i][j].isMine) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    // Check if the game is lost
+    bool isGameLost() {
+        for (int i = 0; i < numRows; ++i) {
+            for (int j = 0; j < numCols; ++j) {
+                if (gameBoard[i][j].isRevealed && gameBoard[i][j].isMine) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+};
+
+// Function to convert a letter (column) to its corresponding index
+int convertLetterToIndex(char letter, int max) {
+    // Note: Assumes input is uppercase letter
+    switch (letter) {
+    case 'A':
+        return 0;
+    case 'B':
+        return 1;
+        // ... Repeat for other letters
+    default:
+        return -1;  // Invalid input
+    }
 }
 
-int main()
-{
-    int option;
-    Game game1(10, 10, 12);
-    Game game2(12, 12, 18);
-    Game game3(20, 20, 24);
-    cout << "                           --------------------" << endl;
-    cout << "                             Mine Sweeper game" << endl;
-    cout << "                           --------------------" << endl;
-    cout << endl;
-    cout << "     Field Option             Size (grid size)             No. of Mines" << endl;
-    cout << "       1                        10-by-10                     12        " << endl;
-    cout << "       2                        15-by-15                     18        " << endl;
-    cout << "       3                        20-by-20                     24        " << endl;
-    cout << endl;
-    cout << "Enter the Option you want to select: ";
-    cin >> option;
-    switch (option)
-    {
-    case 1:
-        cout << "Selected Option 1 - Grid size 10-by-10" << endl;
-        game1.bomb_count();
-        game1.print_arr();
-        break;
-    case 2:
-        cout << "Selected Option 2 - Grid size 12-by-12" << endl;
-        game2.bomb_count();
-        game2.print_arr();
-        break;
-    case 3:
-        cout << "Selected Option 3 - Grid size 20-by-20" << endl;
-        game3.bomb_count();
-        game3.print_arr();
-        break;
-    default:
-        cout << "Error : Invalid Input" << endl;
-        break;
+int main() {
+    srand(static_cast<unsigned>(time(nullptr)));
+
+    int numRows, numCols, numMines;
+    int levelOption;
+    cout << "----------------MINE SWEEPER GAME-----------------" << endl;
+    cout << "Difficulty Levels: " << endl;
+    cout << "\t1. Easy (10x10 grid with 12 mines)" << endl;
+    cout << "\t2. Medium (15x15 grid with 18 mines)" << endl;
+    cout << "\t3. Hard (20x20 grid with 24 mines)" << endl;
+    cout << "Enter Difficulty Level: ";
+    cin >> levelOption;
+
+    if (levelOption == 1) {
+        numRows = 10;
+        numCols = 10;
+        numMines = 12;
     }
+    else if (levelOption == 2) {
+        numRows = 15;
+        numCols = 15;
+        numMines = 18;
+    }
+    else if (levelOption == 3) {
+        numRows = 20;
+        numCols = 20;
+        numMines = 24;
+    }
+    else {
+        cout << "Error: Invalid Difficulty Level." << endl;
+        return 1;
+    }
+
+    MinesweeperGame game(numRows, numCols, numMines);
+
+    while (true) {
+        game.displayGame();
+
+        string command;
+        cout << "Enter command (e.g., {A B R} to reveal, {A B F} to flag): ";
+        char row, col;
+        cin >> row >> col;
+        int iRow = convertLetterToIndex(row, numRows);
+        int iCol = convertLetterToIndex(col, numCols);
+        cin >> command;
+
+        if (command == "F") {
+            game.toggleFlag(iRow, iCol);
+        }
+        else if (command == "R") {
+            if (game.isGameLost()) {
+                cout << "Game Over! You hit a mine." << endl;
+                break;
+            }
+            game.revealCell(iRow, iCol);
+            if (game.isGameWon()) {
+                cout << "Congratulations! You cleared the board without hitting any mines." << endl;
+                break;
+            }
+        }
+    }
+
     return 0;
 }
