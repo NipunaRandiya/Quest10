@@ -1,4 +1,4 @@
-# quest_10.cpp
+# Quest10
 
 ## Minesweeper Game in C++
 
