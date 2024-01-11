@@ -31,10 +31,12 @@ private:
         int totalCells = numRows * numCols;
         while (numMines > 0) 
         {
+            //generation of random positions
             int randRow = rand() % numRows;
             int randCol = rand() % numCols;
             if (!gameBoard[randRow][randCol].isMine) 
             {
+                //condition to update the remaining number of mines
                 gameBoard[randRow][randCol].isMine = true;
                 numMines--;
             }
@@ -44,8 +46,10 @@ private:
     // Calculate the number of adjacent mines for each cell on the board
     void calculateAdjacentMines() 
     {
+        //iteration through rows
         for (int i = 0; i < numRows; ++i) 
         {
+            //iteration through columns
             for (int j = 0; j < numCols; ++j) 
             {
                 if (!gameBoard[i][j].isMine) 
@@ -91,7 +95,8 @@ public:
                     {
                         cout << " * ";
                     }
-                    else {
+                    else 
+                    {
                         cout << " " << gameBoard[i][j].adjacentMines << " ";
                     }
                 }
@@ -104,6 +109,7 @@ public:
                     cout << " C ";  // C represents a covered (unrevealed) cell
                 }
             }
+            cout << endl;
             cout << endl;
         }
     }
@@ -160,6 +166,7 @@ public:
         {
             for (int j = 0; j < numCols; ++j) 
             {
+                //condition to reveal a mine buried postion
                 if (gameBoard[i][j].isRevealed && gameBoard[i][j].isMine) 
                 {
                     return true;
@@ -238,17 +245,20 @@ int main()
             cout << "Error: Invalid Difficulty Level selected. please try again." << endl;
             return 1;
         }
-    
+
+        //execution of the game
         MinesweeperGame game(numRows, numCols, numMines);
 
         while (true) 
         {
+            //displayong the playing grid to th euser
             game.displayGame();
 
             string command;
-            cout << "Enter the command:\nCOmmand sholud be given in the order <row_number> <column_number> <command> \n(e.g., {A B R} to reveal, {A B F} to flag):\n ";
+            cout << "Enter the command:\nC0mmand sholud be given in the order <row_number> <column_number> <command> \n(e.g., {A B R} to reveal, {A B F} to flag):\n ";
             char row, col;
             cin >> row >> col;
+            //gring numbers are taken int he form of english letters from users and finally they are being converted to numbers
             int iRow = convertLetterToIndex(row, numRows);
             int iCol = convertLetterToIndex(col, numCols);
             cin >> command;
