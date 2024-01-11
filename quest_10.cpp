@@ -224,6 +224,7 @@ int convertLetterToIndex(char letter, int max)
     case 'T':
         return 19;
     default:
+        //cout << "wrong input location.please try again" << endl;
         return -1;  // Invalid input
     }
 }
@@ -286,7 +287,7 @@ int main()
 
         while (true) 
         {
-            //displayong the playing grid to th euser
+            //displayong the playing grid to the user
             game.displayGame();
 
             string command;
@@ -296,6 +297,12 @@ int main()
             //gring numbers are taken int he form of english letters from users and finally they are being converted to numbers
             int iRow = convertLetterToIndex(row, numRows);
             int iCol = convertLetterToIndex(col, numCols);
+
+            if (!((0 <= iRow & 19 >= iRow) & (0 <= iCol & 19 >= iCol)))
+            {
+                cout << "wrong postion selected.please try again" << endl;
+
+            }
             cin >> command;
 
             if (command == "F") 
